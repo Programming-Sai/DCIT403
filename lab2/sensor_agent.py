@@ -6,6 +6,8 @@ from spade.agent import Agent
 from spade.behaviour import PeriodicBehaviour
 from lab2.environment import generate_sensor_data
 from config import AGENTS
+import json
+from spade.message import Message
 
 # Setup logging
 logging.basicConfig(
@@ -24,6 +26,17 @@ class SensorAgent(Agent):
                 print(f"[{self.agent.jid}] Sensor reading: {data}")
                 # Log to file
                 logging.info(f"{self.agent.jid} - {data}")
+                msg = Message(
+                    to=AGENTS["coordinator"]["jid"],
+                    sender=str(self.agent.jid),  # Explicitly set the sender
+                    body=json.dumps(data)
+                )
+                msg.set_metadata("performative", "inform")
+                msg.body = json.dumps(data)
+
+                print(f"[{self.agent.jid}] Sending {msg} to {AGENTS['coordinator']['jid']}")
+                await self.send(msg)
+                print(f"[{self.agent.jid}] Message sent")
             except Exception as e:
                 logging.error(f"Error in sensor reading: {e}")
                 print(f"Error reading sensor: {e}")

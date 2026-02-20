@@ -24,6 +24,7 @@ def generate_sensor_data(dormancy_bias=0.8):
     vibration = biased_random(0.0, 8.0)         # mm/s
     temperature = biased_random(25, 500)        # Celsius
     area_affected = biased_random(0.0, 50.0)    # km²
+    population_risk = biased_random(0, 10)      # arbitrary risk score
     lava_flow = 0.0                             # m³/s
     ash_density = 0.0                           # g/m³
 
@@ -56,6 +57,7 @@ def generate_sensor_data(dormancy_bias=0.8):
         "vibration_mm_s": vibration,
         "temperature_C": temperature,
         "ash_density_g_m3": ash_density,
+        "population_risk": population_risk,
         "lava_flow_m3_s": lava_flow,
         "emergency": emergency,
         "area_affected_km2": area_affected
