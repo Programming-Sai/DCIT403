@@ -19,37 +19,39 @@ logging.basicConfig(
 class MonitoringState(State):
     async def run(self):
         print("[Coordinator] State: MONITORING")
-        logging.info("Entered MONITORING state")
         
         # Wait for a message with a timeout
         msg = await self.receive(timeout=2)
         
         if msg:
-            logging.info(f"Received message from {msg.sender}: {msg.body}")
-            try:
-                data = json.loads(msg.body)
-                print(f"[Coordinator] Sensor data received: {data}")
-                logging.info(f"Sensor data parsed: {data}")
-                
-                # Store the data in the agent's memory for later use
-                self.agent.last_sensor_data = data
-                
-                if data.get("emergency"):
-                    print("[Coordinator] Emergency detected!")
-                    logging.warning(f"EMERGENCY DETECTED in sensor data: {data}")
-                    self.set_next_state("ALERT")
-                else:
-                    # Stay in monitoring state
-                    logging.info("No emergency detected, continuing monitoring")
-                    self.set_next_state("MONITORING")
+            # Extract the bare JID (without resource) from the sender
+            sender_bare = str(msg.sender).split('/')[0]  # Removes anything after /
+            sensor_bare = AGENTS["sensor"]["jid"].split('/')[0]
+            
+            print(f"[Coordinator] Message from: {msg.sender} (bare: {sender_bare})")
+            
+            # Compare bare JIDs
+            if sender_bare == sensor_bare:
+                try:
+                    data = json.loads(msg.body)
+                    print(f"[Coordinator] Sensor data received: {data}")
                     
-            except Exception as e:
-                print(f"[Coordinator] Error processing message: {e}")
-                logging.error(f"Error processing message: {e}")
+                    # Store the data in the agent's memory for later use
+                    self.agent.last_sensor_data = data
+                    
+                    if data.get("emergency"):
+                        print("[Coordinator] Emergency detected!")
+                        self.set_next_state("ALERT")
+                    else:
+                        self.set_next_state("MONITORING")
+                        
+                except Exception as e:
+                    print(f"[Coordinator] Error processing message: {e}")
+                    self.set_next_state("MONITORING")
+            else:
+                print(f"[Coordinator] Ignoring message from {sender_bare} (expected {sensor_bare})")
                 self.set_next_state("MONITORING")
         else:
-            # Timeout, stay in monitoring
-            logging.debug("No message received (timeout)")
             self.set_next_state("MONITORING")
 
 class AlertState(State):
